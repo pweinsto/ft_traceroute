@@ -1,0 +1,17 @@
+version: "3.6"
+
+volumes:
+  volapplication:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./ft_traceroute/
+
+services:
+  application:
+    container_name: application
+    build: ./docker/application/
+    volumes:
+    - volapplication:/ft_traceroute/
+    restart: always
