@@ -13,7 +13,7 @@
 
 # include "../libs/libft/libft.h"
 
-# define PORT	 49151
+# define PORT	 8080
 
 struct addrinfo *dns_lookup(char *host);
 

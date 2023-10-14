@@ -8,10 +8,24 @@ volumes:
       o: bind
       device: ./ft_traceroute/
 
+  voltest:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./test/
+
 services:
   application:
-    container_name: application
-    build: ./docker/application/
+    container_name: traceroute
+    build: ./docker/traceroute/
     volumes:
     - volapplication:/ft_traceroute/
+    restart: always
+
+  test:
+    container_name: test
+    build: ./docker/test/
+    volumes:
+    - voltest:/test/
     restart: always
