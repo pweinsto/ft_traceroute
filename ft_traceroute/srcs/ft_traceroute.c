@@ -7,15 +7,17 @@ int main(int argc, char **argv)
     struct  sockaddr_in dest;
     struct addrinfo *info;
     char    *ip;
-    void    *buffer[IP_MAXPACKET];
+    char    buffer[IP_MAXPACKET];
     struct sockaddr  source;
-    unsigned int     len;
+    socklen_t     len;
     int     recv;
     int     send;
-    char *hello = "hello world!";
+    //char *hello = "hello world!";
     int     t = 1;
-    int     ttl = 4;
-
+    int     ttl = 2;
+    char    packet[64];
+    struct icmphdr *icmp_header;
+    size_t  iphdr_size;
 
     (void)argc;
 
@@ -33,19 +35,36 @@ int main(int argc, char **argv)
 	dest.sin_port = htons(PORT);
 	dest.sin_addr = ((struct sockaddr_in *)(info->ai_addr))->sin_addr;
 
+    icmp_header = (struct icmphdr *)packet;
+    icmp_header->type = ICMP_ECHO;
+    icmp_header->code = 0;
+    icmp_header->checksum = 0;
+    icmp_header->un.echo.sequence = htons(0);
+    icmp_header->un.echo.id = getpid();
 
-    if ((send = sendto(fd_out, hello, ft_strlen(hello), 0, (const struct sockaddr *) &dest, sizeof(dest))) == -1)
+    if ((send = sendto(fd_out, icmp_header, 64, 0, (const struct sockaddr *) &dest, sizeof(dest))) == -1)
         printf("send: fail!\n");
     else
         printf("send: %d\n", send);
-
+    
     fd_in = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
     setsockopt(fd_in, SOL_SOCKET, SO_REUSEPORT, &t, sizeof(t));
     
-    while ((recv = recvfrom(fd_in, buffer, sizeof(buffer), MSG_DONTWAIT, &source, &len)) < 0);
+    ft_bzero(buffer, IP_MAXPACKET);
+
+    while ((recv = recvfrom(fd_in, buffer, sizeof(buffer), MSG_DONTWAIT, &source, &len)) < 0)
+    {
+        printf("beeb\n");
+        sleep(1);
+    }
 
     printf("recv: %d\n", recv);
-    printf("buffer: %s\n", (char *)buffer);
+    //printf("buffer: %s\n", (char *)buffer);
+
+    iphdr_size = ((struct iphdr *)buffer)->ihl * 4;
+
+    printf("type: %d\n", ((struct icmphdr *)(buffer + iphdr_size))->type);
+    printf("code: %d\n", ((struct icmphdr *)(buffer + iphdr_size))->code);
 
     return (0);
 }
