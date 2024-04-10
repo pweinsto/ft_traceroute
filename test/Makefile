@@ -5,7 +5,7 @@ NAME = test
 SDIR = ./srcs/
 OBJDIR = ./objs/
 
-CFLAGS =# -Wall -Werror -Wextra
+CFLAGS = -Wall -Werror -Wextra
 
 OBJECTS = $(OBJDIR)/*.o
 

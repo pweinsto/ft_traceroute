@@ -1,57 +1,31 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <string.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <arpa/inet.h>
-#include <netinet/in.h>
-	
-#define PORT	 8080
-#define MAXLINE 1024
-	
-// Driver code
-int main() {
-	int sockfd;
-	char buffer[MAXLINE];
-	char *hello = "Hello from server";
-	struct sockaddr_in servaddr, cliaddr;
-		
-	// Creating socket file descriptor
-	if ( (sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0 ) {
-		perror("socket creation failed");
-		exit(EXIT_FAILURE);
-	}
-		
-	memset(&servaddr, 0, sizeof(servaddr));
-	memset(&cliaddr, 0, sizeof(cliaddr));
-		
-	// Filling server information
-	servaddr.sin_family = AF_INET; // IPv4
+# include <stdio.h>
+# include <string.h>
+# include <netdb.h>
+
+int main(void)
+{
+    int fd_sock;
+    char    buffer[40];
+    socklen_t     len;
+    int recv;
+    struct sockaddr_in servaddr, cliaddr;
+
+    fd_sock = socket(AF_INET, SOCK_DGRAM, 0);
+
+    memset(&servaddr, 0, sizeof(servaddr));
+    memset(&cliaddr, 0, sizeof(cliaddr));
+
+	servaddr.sin_family = AF_INET;
 	servaddr.sin_addr.s_addr = INADDR_ANY;
-	servaddr.sin_port = htons(PORT);
-		
-	// Bind the socket with the server address
-	if ( bind(sockfd, (const struct sockaddr *)&servaddr,
-			sizeof(servaddr)) < 0 )
-	{
-		perror("bind failed");
-		exit(EXIT_FAILURE);
-	}
-		
-	int len, n;
-	
-	len = sizeof(cliaddr); //len is value/result
-	
-	n = recvfrom(sockfd, (char *)buffer, MAXLINE,
-				MSG_WAITALL, ( struct sockaddr *) &cliaddr,
-				&len);
-	buffer[n] = '\0';
-	printf("Client : %s\n", buffer);
-	sendto(sockfd, (const char *)hello, strlen(hello),
-		MSG_CONFIRM, (const struct sockaddr *) &cliaddr,
-			len);
-	printf("Hello message sent.\n");
-		
-	return 0;
+	servaddr.sin_port = htons(33434);
+
+    bind(fd_sock, (struct sockaddr *)&(servaddr), sizeof(servaddr));
+
+    recv = recvfrom(fd_sock, buffer, sizeof(buffer), MSG_WAITALL, (struct sockaddr *)&cliaddr, &len);
+
+    printf("recv: %d\n", recv);
+
+    printf("%s\n", buffer);
+
+    return (0);
 }
