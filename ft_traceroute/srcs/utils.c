@@ -5,6 +5,8 @@ struct addrinfo *dns_lookup(char *host)
     struct addrinfo hints;
     struct addrinfo *res;
 
+    if (!(res = ft_calloc(sizeof(struct addrinfo), 1)))
+		error(strerror(errno));
     ft_bzero(&hints, sizeof(hints));
 
     hints.ai_family = AF_INET;
@@ -13,6 +15,13 @@ struct addrinfo *dns_lookup(char *host)
 	hints.ai_flags = AI_CANONNAME;
 
 	if (getaddrinfo(host, NULL, &hints, &res))
-       printf("unknown host\n");
+        error(UNK_HOST);
     return res;
+}
+
+void error(const char *error)
+{
+    fprintf(stderr, error);
+	fprintf(stderr, "\n");
+    exit(EXIT_FAILURE);
 }

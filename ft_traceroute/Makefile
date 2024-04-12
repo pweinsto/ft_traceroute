@@ -11,7 +11,9 @@ CFLAGS = -Wall -Werror -Wextra
 OBJECTS = $(OBJDIR)/*.o
 
 SRCS =	./srcs/ft_traceroute.c \
+		./srcs/parser.c \
 		./srcs/utils.c \
+		./srcs/trace_out.c \
 
 $(NAME): $(OBJECTS) make_libft
 	$(CC) $(OBJECTS) -o $(NAME) $(LIBFT)
