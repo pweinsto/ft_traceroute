@@ -19,6 +19,12 @@ int main(int argc, char **argv)
     char    data[] = DATA;
     t_trace     *trace;
     size_t  probe;
+    float  timediff;
+    struct timeval  init_time;
+    uint32_t  prev_ip;
+    struct iphdr    *ip;
+    struct icmphdr  *icmp;   
+
 
 
     if (argc <= 1)
@@ -50,7 +56,7 @@ int main(int argc, char **argv)
 	dest.sin_port = htons(PORT);
 	dest.sin_addr = ((struct sockaddr_in *)(trace->info->ai_addr))->sin_addr;
 
-    printf("traceroute to %s (%s), %d hops max\n", trace->domain, "ip", MAXHOP);
+    dprintf(STDOUT_FILENO, "ft_traceroute to %s (%s), %d hops max", trace->domain, "ip", MAXHOP);
 
     fd_in = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
     setsockopt(fd_in, SOL_SOCKET, SO_REUSEPORT, &t, sizeof(t));
@@ -59,27 +65,46 @@ int main(int argc, char **argv)
     ttl = 1;
     while (ttl < MAXHOP)
     {
+        dprintf(STDOUT_FILENO, "\n");
         setsockopt(fd_out, SOL_IP, IP_TTL, &ttl, sizeof(ttl));
 
         probe = 0;
+        prev_ip = 0;
         while (probe < 3)
         {
             if ((send = sendto(fd_out, data, sizeof(data), 0, (const struct sockaddr *) &dest, sizeof(dest))) == -1)
-            error(strerror(errno));
+                error(strerror(errno));
 
-            recv = recvfrom(fd_in, buffer, sizeof(buffer), MSG_WAITALL, &source, &len);
-            printf("%d.%d.%d.%d\n", (0xff & ((struct iphdr *)buffer)->saddr), (0xff00 & ((struct iphdr *)buffer)->saddr) >> 8 , (0xff0000 & ((struct iphdr *)buffer)->saddr) >> 16, (0xff000000 & ((struct iphdr *)buffer)->saddr) >> 24);
+            if (gettimeofday(&init_time, NULL) == -1)
+                error(strerror(errno));
+            //timediff = time_diff(init_time);
+            while ((timediff = time_diff(init_time)) <= WAIT && (recv = recvfrom(fd_in, buffer, sizeof(buffer), MSG_DONTWAIT, &source, &len)) <= 0){};
 
-            iphdr_size = ((struct iphdr *)buffer)->ihl * 4;
-
-            printf("type: %d\n", ((struct icmphdr *)(buffer + iphdr_size))->type);
-            printf("code: %d\n", ((struct icmphdr *)(buffer + iphdr_size))->code);
-            
-            if (((struct icmphdr *)(buffer + iphdr_size))->type == 3 && ((struct icmphdr *)(buffer + iphdr_size))->code == 3)
-                exit(0);
+            ip = (struct iphdr *)buffer;
+            icmp = (struct icmphdr *)(buffer + (ip->ihl * 4));
+            dprintf(STDOUT_FILENO, "id: %d\n", icmp->un.echo.sequence);
+            if (probe == 0 )
+                dprintf(STDOUT_FILENO, " %2d  ", ttl);
+            if (timediff > WAIT)
+                dprintf(STDOUT_FILENO, " * ");
+            else
+                {
+                    if (ip->saddr != prev_ip)
+                    {
+                        dprintf(STDOUT_FILENO, " %d.%d.%d.%d ", (0xff & ip->saddr), (0xff00 & ip->saddr) >> 8 , (0xff0000 & ip->saddr) >> 16, (0xff000000 & ip->saddr) >> 24);
+                        prev_ip = ip->saddr;
+                    }
+                    dprintf(STDOUT_FILENO, " %.3fms ", timediff);
+                    
+                }
 
             probe++;
         }
+        if (icmp->type == 3 && icmp->code == 3)
+        {
+            dprintf(STDOUT_FILENO, "\n");
+            exit(0);
+        }     
         ttl++;
     }
 

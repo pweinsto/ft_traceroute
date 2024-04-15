@@ -21,6 +21,7 @@
 # define PORT   33434
 # define MAXHOP 64
 # define DATA   "SUPERMAN"
+# define WAIT   3000 //in microseconds
 
 typedef struct s_probe
 {
@@ -44,6 +45,7 @@ typedef struct s_trace
 
 struct addrinfo *dns_lookup(char *host);
 void error(const char *error);
+float	time_diff(struct timeval init_time);
 
 int parser(char **argv, t_trace  *trace);
 
