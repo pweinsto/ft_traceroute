@@ -79,6 +79,13 @@ int main(void)
 
         printf("type: %d\n", ((struct icmphdr *)(buffer + iphdr_size))->type);
         printf("code: %d\n", ((struct icmphdr *)(buffer + iphdr_size))->code);
+        printf("checksum: %d\n", ((struct icmphdr *)(buffer + iphdr_size))->checksum);
+        printf("id: %d\n", ((struct icmphdr *)(buffer + iphdr_size))->un.echo.id);
+        printf("sequence: %d\n", ((struct icmphdr *)(buffer + iphdr_size))->un.echo.sequence);
+        printf("gateway: %d\n", ((struct icmphdr *)(buffer + iphdr_size))->un.gateway);
+        printf("__glibc_reserved: %d\n", ((struct icmphdr *)(buffer + iphdr_size))->un.frag.__glibc_reserved);
+        printf("mtu: %d\n", ((struct icmphdr *)(buffer + iphdr_size))->un.frag.mtu);
+
 
 
         // ip = cliaddr.sin_addr.s_addr;

@@ -3,7 +3,7 @@
 # include <netdb.h>
 # include <netinet/ip_icmp.h>
 
-# define PACKET_SIZE    64
+# define PACKET_SIZE    45
 
 unsigned short	checksum(unsigned short *data, int len)
 {
@@ -35,6 +35,7 @@ int main(void)
     uint32_t    ip;
     int send;
     size_t  i;
+    int val;
 
     fd_sock = socket(AF_INET, SOCK_DGRAM, 0);
 
@@ -48,6 +49,9 @@ int main(void)
     bind(fd_sock, (struct sockaddr *)&(servaddr), sizeof(servaddr));
 
     sock_out = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
+
+    val = IP_PMTUDISC_DONT;
+    setsockopt(sock_out, SOL_IP, IP_MTU_DISCOVER, &val, sizeof(val));
     
     i = 1;
 
@@ -74,6 +78,8 @@ int main(void)
         icmp_header->un.echo.id = 0;
 
         icmp_header->checksum = checksum((unsigned short *)packet, PACKET_SIZE);
+
+        printf("icmp_checksum: %d\n", icmp_header->checksum);
 
         send = sendto(sock_out, packet, PACKET_SIZE, 0, (struct sockaddr*)&cliaddr,  sizeof(struct sockaddr));
 
