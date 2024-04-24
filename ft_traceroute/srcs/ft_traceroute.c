@@ -2,20 +2,15 @@
 
 int main(int argc, char **argv)
 {
-    int     fd_out;
-    int     fd_in;
-    struct  sockaddr_in dest;
-    //struct addrinfo *info;
-    //char    *ip;
+  
     char    buffer[IP_MAXPACKET];
     struct sockaddr  source;
     socklen_t     len;
     int     recv;
     int     send;
-    int     t = 1;
-    int     ttl;
+    //int     t = 1;
     size_t  iphdr_size;
-    struct sockaddr_in	saddr;
+
     char    data[] = DATA;
     t_trace     *trace;
     size_t  probe;
@@ -39,52 +34,52 @@ int main(int argc, char **argv)
     // inet_ntop(AF_INET, &info->ai_addr->sa_data[2], ip, INET_ADDRSTRLEN);
     // printf("%s\n", ip);
 
-    ft_bzero(&saddr, sizeof(saddr));
-	saddr.sin_family = AF_INET;
-	saddr.sin_addr.s_addr = INADDR_ANY;
-	saddr.sin_port = htons(0);
-
-    fd_out = socket(AF_INET, SOCK_DGRAM, 0);
-
-    bind(fd_out, (struct sockaddr *)&(saddr), sizeof(saddr));
-
-    setsockopt(fd_out, SOL_SOCKET, SO_REUSEPORT, &t, sizeof(t));
-    setsockopt(fd_out, SOL_IP, IP_TTL, &ttl, sizeof(ttl));
-    memset(&dest, 0, sizeof(dest));
-
-    dest.sin_family = AF_INET;
-	dest.sin_port = htons(PORT);
-	dest.sin_addr = ((struct sockaddr_in *)(trace->info->ai_addr))->sin_addr;
+    set_out_socket(trace);
+    set_in_socket(trace);
 
     dprintf(STDOUT_FILENO, "ft_traceroute to %s (%s), %d hops max", trace->domain, "ip", MAXHOP);
 
-    fd_in = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
-    setsockopt(fd_in, SOL_SOCKET, SO_REUSEPORT, &t, sizeof(t));
-    ft_bzero(buffer, IP_MAXPACKET);
-
-    ttl = 1;
-    while (ttl < MAXHOP)
+    trace->ttl = 1;
+    while (trace->ttl < MAXHOP)
     {
         dprintf(STDOUT_FILENO, "\n");
-        setsockopt(fd_out, SOL_IP, IP_TTL, &ttl, sizeof(ttl));
+        setsockopt(trace->out_socket, SOL_IP, IP_TTL, &trace->ttl, sizeof(trace->ttl));
 
         probe = 0;
         prev_ip = 0;
         while (probe < 3)
         {
-            if ((send = sendto(fd_out, data, sizeof(data), 0, (const struct sockaddr *) &dest, sizeof(dest))) == -1)
+            if ((send = sendto(trace->out_socket, data, sizeof(data), 0, (const struct sockaddr *) &trace->dest, sizeof(trace->dest))) == -1)
                 error(strerror(errno));
 
             if (gettimeofday(&init_time, NULL) == -1)
                 error(strerror(errno));
             //timediff = time_diff(init_time);
-            while ((timediff = time_diff(init_time)) <= WAIT && (recv = recvfrom(fd_in, buffer, sizeof(buffer), MSG_DONTWAIT, &source, &len)) <= 0){};
+            ft_bzero(buffer, IP_MAXPACKET);
+            while ((timediff = time_diff(init_time)) <= WAIT /*&& (recv = recvfrom(trace->in_socket, buffer, sizeof(buffer), MSG_DONTWAIT, &source, &len)) <= 0*/)
+            {
+                recv = recvfrom(trace->in_socket, buffer, sizeof(buffer), MSG_DONTWAIT, &source, &len);
+
+                if (recv > 0)
+                {
+                    ip = (struct iphdr *)buffer;
+                    icmp = (struct icmphdr *)(buffer + (ip->ihl * 4));
+
+                    if (icmp->type != ICMP_TIME_EXCEEDED && icmp->type != ICMP_DEST_UNREACH)
+                        continue;
+                    
+                    break;
+
+                }
+
+                //check_packet();
+            }
 
             ip = (struct iphdr *)buffer;
             icmp = (struct icmphdr *)(buffer + (ip->ihl * 4));
-            dprintf(STDOUT_FILENO, "id: %d\n", icmp->un.echo.sequence);
+            //dprintf(STDOUT_FILENO, "id: %d\n", icmp->un.echo.sequence);
             if (probe == 0 )
-                dprintf(STDOUT_FILENO, " %2d  ", ttl);
+                dprintf(STDOUT_FILENO, " %2d  ", trace->ttl);
             if (timediff > WAIT)
                 dprintf(STDOUT_FILENO, " * ");
             else
@@ -105,7 +100,7 @@ int main(int argc, char **argv)
             dprintf(STDOUT_FILENO, "\n");
             exit(0);
         }     
-        ttl++;
+        trace->ttl++;
     }
 
     

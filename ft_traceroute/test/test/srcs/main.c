@@ -2,6 +2,7 @@
 # include <string.h>
 # include <netdb.h>
 # include <netinet/ip_icmp.h>
+# include <netinet/udp.h>
 
 # define PACKET_SIZE    64
 
@@ -26,7 +27,7 @@ int main(void)
 {
     //int fd_sock;
     int sock_out;
-    char    buffer[40];
+    char    buffer[IP_MAXPACKET];
     socklen_t     len;
     int recv;
     struct sockaddr_in /*servaddr,*/ cliaddr;
@@ -36,11 +37,15 @@ int main(void)
     //int send;
     int iphdr_size;
     size_t  i;
+    int xip;
+    int xudp;
 
     // fd_sock = socket(AF_INET, SOCK_DGRAM, 0);
 
     // memset(&servaddr, 0, sizeof(servaddr));
     memset(&cliaddr, 0, sizeof(cliaddr));
+
+
 
 	// servaddr.sin_family = AF_INET;
 	// servaddr.sin_addr.s_addr = INADDR_ANY;
@@ -56,6 +61,8 @@ int main(void)
     {
         printf("###%ld###\n", i);
         
+
+        memset(&buffer, 0, IP_MAXPACKET);
         recv = recvfrom(sock_out, buffer, sizeof(buffer), MSG_WAITALL, (struct sockaddr *)&cliaddr, &len);
 
         printf("recv: %d\n", recv);
@@ -80,11 +87,33 @@ int main(void)
         printf("type: %d\n", ((struct icmphdr *)(buffer + iphdr_size))->type);
         printf("code: %d\n", ((struct icmphdr *)(buffer + iphdr_size))->code);
         printf("checksum: %d\n", ((struct icmphdr *)(buffer + iphdr_size))->checksum);
-        printf("id: %d\n", ((struct icmphdr *)(buffer + iphdr_size))->un.echo.id);
-        printf("sequence: %d\n", ((struct icmphdr *)(buffer + iphdr_size))->un.echo.sequence);
+        printf("id: %d\n", ntohs(((struct icmphdr *)(buffer + iphdr_size))->un.echo.id));
+        printf("sequence: %d\n", ntohs(((struct icmphdr *)(buffer + iphdr_size))->un.echo.sequence));
         printf("gateway: %d\n", ((struct icmphdr *)(buffer + iphdr_size))->un.gateway);
         printf("__glibc_reserved: %d\n", ((struct icmphdr *)(buffer + iphdr_size))->un.frag.__glibc_reserved);
         printf("mtu: %d\n", ((struct icmphdr *)(buffer + iphdr_size))->un.frag.mtu);
+
+        xip = iphdr_size + sizeof(struct icmphdr);
+
+        printf("Xversion: %d\n", ((struct iphdr *)buffer + xip)->version);
+        printf("Xihl: %d\n", ((struct iphdr *)buffer + xip)->ihl);
+        printf("Xtos: %d\n", ((struct iphdr *)buffer + xip)->tos);
+        printf("Xtot_len: %d\n", ntohs(((struct iphdr *)buffer + xip)->tot_len));
+        printf("Xid: %d\n", ntohs(((struct iphdr *)buffer + xip)->id));
+        printf("Xfrag_off: %d\n", ((struct iphdr *)buffer + xip)->frag_off);
+        printf("Xttl: %d\n", ((struct iphdr *)buffer + xip)->ttl);
+        printf("Xprotocol: %d\n", ((struct iphdr *)buffer + xip)->protocol);
+        printf("Xcheck: %d\n", ((struct iphdr *)buffer + xip)->check);
+        printf("Xsaddr: %d.%d.%d.%d\n", (0xff & ((struct iphdr *)buffer + xip)->saddr), (0xff00 & ((struct iphdr *)buffer + xip)->saddr) >> 8 , (0xff0000 & ((struct iphdr *)buffer + xip)->saddr) >> 16, (0xff000000 & ((struct iphdr *)buffer + xip)->saddr) >> 24);
+        printf("Xdaddr: %d.%d.%d.%d\n", (0xff & ((struct iphdr *)buffer + xip)->daddr), (0xff00 & ((struct iphdr *)buffer + xip)->daddr) >> 8 , (0xff0000 & ((struct iphdr *)buffer + xip)->daddr) >> 16, (0xff000000 & ((struct iphdr *)buffer + xip)->daddr) >> 24);
+    
+        xudp = xip + sizeof(struct iphdr);
+
+        printf("source: %d\n", ntohs(((struct udphdr *)buffer + xudp)->source));
+        printf("dest: %d\n", ntohs(((struct udphdr *)buffer + xudp)->dest));
+        printf("len: %d\n", ntohs(((struct udphdr *)buffer + xudp)->len));
+        printf("check: %d\n", ntohs(((struct udphdr *)buffer + xudp)->check));
+
 
 
 

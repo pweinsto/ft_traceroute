@@ -12,6 +12,7 @@
 # include <netinet/in.h>
 # include <netinet/ip.h>
 # include <netinet/ip_icmp.h>
+# include <netinet/udp.h>
 # include <netdb.h>
 # include <sys/time.h>
 
@@ -41,6 +42,11 @@ typedef struct s_trace
     char            *domain;
     char            *ip;
     struct addrinfo *info;
+    int             ttl;
+    int             out_socket;
+    int             in_socket;
+    struct sockaddr_in  dest;
+    int             valid_probe;
 }   t_trace;
 
 struct addrinfo *dns_lookup(char *host);
@@ -48,5 +54,8 @@ void error(const char *error);
 float	time_diff(struct timeval init_time);
 
 int parser(char **argv, t_trace  *trace);
+
+int set_out_socket(t_trace *trace);
+int set_in_socket(t_trace *trace);
 
 #endif
