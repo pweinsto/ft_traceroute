@@ -37,7 +37,7 @@ int main(int argc, char **argv)
     set_out_socket(trace);
     set_in_socket(trace);
 
-    dprintf(STDOUT_FILENO, "ft_traceroute to %s (%s), %d hops max", trace->domain, "ip", MAXHOP);
+    dprintf(STDOUT_FILENO, "ft_traceroute to %s (%s), %d hops max", trace->domain, trace->ip, MAXHOP);
 
     trace->ttl = 1;
     while (trace->ttl < MAXHOP)

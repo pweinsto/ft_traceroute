@@ -16,6 +16,7 @@ struct addrinfo *dns_lookup(char *host)
 
 	if (getaddrinfo(host, NULL, &hints, &res))
         error(UNK_HOST);
+ 
     return res;
 }
 

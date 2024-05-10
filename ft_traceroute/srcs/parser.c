@@ -31,6 +31,7 @@ int parser(char **argv, t_trace  *trace)
             //     error(strerror(errno));
             // }
             trace->domain = *argv;
+            trace->ip = inet_ntoa(((struct sockaddr_in *)(trace->info->ai_addr))->sin_addr);
         }
         argv++;
     }
