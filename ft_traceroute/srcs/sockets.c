@@ -12,7 +12,7 @@ int set_out_socket(t_trace *trace)
 	saddr.sin_addr.s_addr = INADDR_ANY;
 	saddr.sin_port = htons(0);
 
-    trace->out_socket = socket(AF_INET, SOCK_DGRAM, 0);
+    trace->out_socket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 
     bind(trace->out_socket, (struct sockaddr *)&(saddr), sizeof(saddr));
 
@@ -38,11 +38,3 @@ int set_in_socket(t_trace *trace)
 
     return (1);
 }
-
-// int check_packet(t_trace *trace)
-// {
-
-
-
-//     trace->valid_probe++
-// }

@@ -25,11 +25,6 @@ int parser(char **argv, t_trace  *trace)
         else
         { 
             trace->info = dns_lookup(*argv);
-            // if (!inet_ntop(AF_INET, &trace->info->ai_addr->sa_data[2], trace->ip, INET_ADDRSTRLEN))
-            // {
-		    //     printf("falsch\n");
-            //     error(strerror(errno));
-            // }
             trace->domain = *argv;
             trace->ip = inet_ntoa(((struct sockaddr_in *)(trace->info->ai_addr))->sin_addr);
         }
