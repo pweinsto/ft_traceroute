@@ -1,12 +1,10 @@
 # include "../incs/ft_traceroute.h"
 
-struct addrinfo *dns_lookup(char *host)
+struct addrinfo *dns_lookup(t_trace  *trace, char *host)
 {
     struct addrinfo hints;
     struct addrinfo *res;
 
-    if (!(res = ft_calloc(sizeof(struct addrinfo), 1)))
-		error(strerror(errno));
     ft_bzero(&hints, sizeof(hints));
 
     hints.ai_family = AF_INET;
@@ -15,7 +13,10 @@ struct addrinfo *dns_lookup(char *host)
 	hints.ai_flags = AI_CANONNAME;
 
 	if (getaddrinfo(host, NULL, &hints, &res))
+    {
+        free(trace);
         error(UNK_HOST);
+    }
  
     return res;
 }
@@ -32,5 +33,6 @@ float	time_diff(struct timeval init_time)
 	struct timeval	current_time;
 
 	gettimeofday(&current_time, NULL);
+
 	return (current_time.tv_sec - init_time.tv_sec) * 1000 + (current_time.tv_usec - init_time.tv_usec) / 1000.0;
 }

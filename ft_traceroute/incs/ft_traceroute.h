@@ -49,7 +49,7 @@ typedef struct s_trace
     int             valid_probe;
 }   t_trace;
 
-struct addrinfo *dns_lookup(char *host);
+struct addrinfo *dns_lookup(t_trace  *trace, char *host);
 void error(const char *error);
 float	time_diff(struct timeval init_time);
 
