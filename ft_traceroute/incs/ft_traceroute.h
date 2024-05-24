@@ -27,34 +27,35 @@
 typedef struct s_probe
 {
     size_t  id;
-    //timeval time;
 }   t_probe;
 
 typedef struct s_hop
 {
-    size_t  ttl;
+    size_t          ttl;
     struct t_probe *probe[3];
-    size_t  last_ip;
+    size_t          last_ip;
 }   t_hop;
 
 typedef struct s_trace
 {
-    char            *domain;
-    char            *ip;
-    struct addrinfo *info;
-    int             ttl;
-    int             out_socket;
-    int             in_socket;
+    char                *domain;
+    char                *ip;
+    struct addrinfo     *info;
+    int                 ttl;
+    int                 out_socket;
+    int                 in_socket;
     struct sockaddr_in  dest;
-    int             valid_probe;
 }   t_trace;
 
+//utils.c
 struct addrinfo *dns_lookup(t_trace  *trace, char *host);
-void error(const char *error);
-float	time_diff(struct timeval init_time);
+void            error(const char *error);
+float	        time_diff(struct timeval init_time);
 
+//parser.c
 int parser(char **argv, t_trace  *trace);
 
+//sockets.c
 int set_out_socket(t_trace *trace);
 int set_in_socket(t_trace *trace);
 

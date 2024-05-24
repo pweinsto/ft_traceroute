@@ -15,9 +15,7 @@ int main(int argc, char **argv)
     struct timeval      init_time;
     uint32_t            prev_ip;
     struct iphdr        *ip;
-    struct icmphdr      *icmp;   
-
-
+    struct icmphdr      *icmp;
 
     if (argc <= 1)
         error(NO_ARG);
@@ -30,7 +28,6 @@ int main(int argc, char **argv)
     set_out_socket(trace);
     set_in_socket(trace);
 
-    ft_bzero(&source, sizeof(source));
     len = sizeof(source);
 
     dprintf(STDOUT_FILENO, "ft_traceroute to %s (%s), %d hops max", trace->domain, trace->ip, MAXHOP);
@@ -42,6 +39,8 @@ int main(int argc, char **argv)
 
         if ((setsockopt(trace->out_socket, SOL_IP, IP_TTL, &trace->ttl, sizeof(trace->ttl))) == -1)
         {
+            close(trace->out_socket);
+            close(trace->in_socket);
             freeaddrinfo(trace->info);
             free(trace);
             error(strerror(errno));
@@ -53,6 +52,8 @@ int main(int argc, char **argv)
         {
             if ((send = sendto(trace->out_socket, data, sizeof(data), 0, (const struct sockaddr *) &trace->dest, sizeof(trace->dest))) == -1)
             {
+                close(trace->out_socket);
+                close(trace->in_socket);
                 freeaddrinfo(trace->info);
                 free(trace);
                 error(strerror(errno));
@@ -60,6 +61,8 @@ int main(int argc, char **argv)
 
             if (gettimeofday(&init_time, NULL) == -1)
             {
+                close(trace->out_socket);
+                close(trace->in_socket);
                 freeaddrinfo(trace->info);
                 free(trace);
                 error(strerror(errno));
@@ -69,6 +72,8 @@ int main(int argc, char **argv)
 
             while ((timediff = time_diff(init_time)) <= WAIT)
             {
+                ft_bzero(&source, sizeof(source));
+                
                 recv = recvfrom(trace->in_socket, buffer, sizeof(buffer), MSG_DONTWAIT, (struct sockaddr *)&source, &len);
 
                 if (recv > 0)
@@ -89,10 +94,10 @@ int main(int argc, char **argv)
                 dprintf(STDOUT_FILENO, " * ");
             else
                 {
-                    if (ip->saddr != prev_ip)
+                    if (source.sin_addr.s_addr != prev_ip)
                     {
-                        dprintf(STDOUT_FILENO, " %d.%d.%d.%d ", (0xff & ip->saddr), (0xff00 & ip->saddr) >> 8 , (0xff0000 & ip->saddr) >> 16, (0xff000000 & ip->saddr) >> 24);
-                        prev_ip = ip->saddr;
+                        dprintf(STDOUT_FILENO," %s ", inet_ntoa(source.sin_addr));
+                        prev_ip = source.sin_addr.s_addr;
                     }
 
                     dprintf(STDOUT_FILENO, " %.3fms ", timediff);
@@ -107,6 +112,8 @@ int main(int argc, char **argv)
         if (icmp->type == ICMP_DEST_UNREACH)
         {
             dprintf(STDOUT_FILENO, "\n");
+            close(trace->out_socket);
+            close(trace->in_socket);
             freeaddrinfo(trace->info);
             free(trace);
             exit(0);
