@@ -23,6 +23,8 @@ $(OBJECTS): $(SRCS)
 	rm -rf ./objs; mkdir ./objs
 	mv *.o $(OBJDIR)
 
+all: $(NAME)
+
 make_libft:
 	make -C libs/libft
 
@@ -39,5 +41,4 @@ fclean: clean fclean_libft
 fclean_libft:
 	make fclean -C libs/libft
 
-re: fclean $(NAME)
-
+re: fclean all
